@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1b1a2e">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Marleni</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=VT323&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/question.css">
+</head>
+<body>
+  <pre id="art" aria-hidden="true"></pre>
+  <h1 id="question">Will you be my Girlfriend?</h1>
+  <div id="answers">
+    <a id="yes" class="btn" href="yes.html">Yes</a>
+    <button id="no" class="btn" type="button">No</button>
+  </div>
+
+  <script src="js/bloom.js"></script>
+  <script src="js/question.js"></script>
+  <script>
+    // Debug: ?at=3000 zeigt den Zustand nach 3 s als Standbild
+    const params = new URLSearchParams(location.search);
+    const at = params.has('at') ? Number(params.get('at')) : null;
+    Bloom.play(document.getElementById('art'), {
+      at,
+      onComplete: () => {
+        document.getElementById('question').classList.add('visible');
+        Question.show();
+      },
+    });
+  </script>
+</body>
+</html>

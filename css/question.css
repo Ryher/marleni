@@ -1,0 +1,61 @@
+/* Yes/No-Buttons unter der Frage */
+
+#answers {
+  position: fixed;
+  top: 30vh;              /* wird per JS direkt unter die Frage gesetzt */
+  left: 16px;
+  right: 16px;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  gap: 28px;
+  pointer-events: none;   /* nur die Buttons selbst fangen Eingaben */
+  visibility: hidden;
+}
+
+#answers.visible {
+  visibility: visible;
+}
+
+.btn {
+  pointer-events: auto;
+  min-width: 44px;
+  min-height: 48px;
+  margin: 0;
+  padding: 4px 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(143, 95, 214, 0.55);
+  border-radius: 4px;
+  background: rgba(5, 4, 9, 0.85);
+  color: #f4eeff;
+  font-family: "VT323", ui-monospace, Menlo, Consolas, monospace;
+  font-size: 2.2rem;
+  line-height: 1;
+  white-space: pre;
+  text-decoration: none;
+  text-shadow: 0 0 8px rgba(195, 155, 245, 0.9);
+  box-shadow: 0 0 10px rgba(143, 95, 214, 0.45), inset 0 0 8px rgba(143, 95, 214, 0.25);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.btn::before { content: "[ "; color: #c39bf5; }
+.btn::after  { content: " ]"; color: #c39bf5; }
+
+.btn:hover,
+.btn:focus-visible {
+  outline: none;
+  border-color: #c39bf5;
+  box-shadow: 0 0 16px rgba(195, 155, 245, 0.75), inset 0 0 10px rgba(143, 95, 214, 0.4);
+}
+
+/* Nach dem ersten Fluchtversuch frei im Viewport positioniert (left/top per JS) */
+#no.fled,
+#yes.moved {
+  position: fixed;
+}
