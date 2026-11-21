@@ -1,5 +1,6 @@
 /*
- * Erfolgsseite: ASCII-Sternenhimmel mit Schnee, eine Wiese aus vielen kleinen, verschiedenen
+ * Erfolgsseite: ASCII-Sternenhimmel mit Schnee, dahinter ein Alpenpanorama aus drei
+ * Bergketten mit Schneegipfeln, davor eine Wiese aus vielen kleinen, verschiedenen
  * 3D-ASCII-Blumen (gleiche Schattierung wie die große Ochsenzunge, aber ohne Drehung)
  * und ein paar Salven Konfetti in Lila, Violett und Weiß.
  *
@@ -34,6 +35,7 @@
   let cols = 0, rows = 0, aspect = 0.6;
   let stars = [], snow = [];
   let depth, lum, mat;               // statischer Blumen-Puffer
+  let bgCh, bgCls;                   // statischer Hintergrund: Berge und Wiese
   let flowers = [], shown = 0;
 
   const escape = (ch) => (ch === '<' ? '&lt;' : ch);
@@ -169,6 +171,76 @@
     KINDS[f.kind](f, top, n, step);
   }
 
+  // ---------- Alpen ----------
+
+  // deterministischer Pseudo-Zufall, damit die Berge bei jedem Laden gleich aussehen
+  const hash = (a, b) => {
+    const h = Math.sin(a * 127.1 + b * 311.7) * 43758.5453;
+    return h - Math.floor(h);
+  };
+
+  // Gratlinie mit spitzen Gipfeln ("ridged noise"), Werte etwa 0..1
+  function ridge(u, seed) {
+    let v = 0, a = 0.6, f = 1, sum = 0;
+    for (let o = 0; o < 4; o++) {
+      v += a * Math.pow(1 - Math.abs(Math.sin(u * f + seed * (o + 1) * 1.7)), 1.6);
+      sum += a;
+      a *= 0.4;
+      f *= 2.3;
+    }
+    return v / sum;
+  }
+
+  const LAYERS = [
+    // hinten: hohe, blasse Gipfel mit viel Schnee
+    { base: 0.56, amp: 0.36, scale: 0.03, seed: 1.3, cls: 'm0', snow: 0.1 },
+    // Mitte: etwas dunkler, weniger Schnee
+    { base: 0.6, amp: 0.22, scale: 0.045, seed: 4.1, cls: 'm1', snow: 0.06 },
+    // vorne: grüne Vorberge, kein Schnee
+    { base: 0.65, amp: 0.05, scale: 0.08, seed: 7.7, cls: 'm2', snow: 0 },
+  ];
+
+  function buildAlps() {
+    bgCh = new Array(cols * rows).fill(null);
+    bgCls = new Array(cols * rows).fill(null);
+    const set = (x, y, ch, cls) => {
+      const i = y * cols + x;
+      bgCh[i] = ch;
+      bgCls[i] = cls;
+    };
+
+    LAYERS.forEach((L) => {
+      // Gratlinie in Zeilen; x wird in Zeilen-Einheiten gerechnet, damit die Form unabhängig von der Schrift ist
+      const h = (x) => rows * (L.base - L.amp * ridge(x * aspect * L.scale, L.seed));
+      for (let x = 0; x < cols; x++) {
+        const top = h(x);
+        const slope = h(x + 1) - h(x - 1);          // < 0: steigt nach rechts an → Hang zeigt zum Licht (links)
+        const lit = slope < 0;
+        const peak = h(x) <= h(x - 1) && h(x) <= h(x + 1);
+        const height = (L.base * rows - top) / (L.amp * rows);   // 0 = Tal, 1 = höchster Gipfel
+        // Schnee nur oberhalb der Schneegrenze, dicker je höher der Gipfel
+        const capDepth = L.snow * rows * Math.max(0, height - 0.4) * 2.5;
+
+        for (let y = Math.max(0, Math.floor(top)); y < rows; y++) {
+          const d = y - top;
+          const r = hash(x, y + L.seed * 100);
+          if (d < 1) {
+            set(x, y, peak ? '^' : slope < -0.5 ? '/' : slope > 0.5 ? '\\' : '-', `${L.cls}-r`);
+          } else if (d < capDepth) {
+            // Schneekuppe: Lichtseite hell und dicht, Schattenseite bläulich
+            set(x, y, lit ? (r < 0.5 ? '#' : '%') : (r < 0.5 ? ':' : '.'), lit ? 'cap-1' : 'cap-0');
+          } else if (L.cls === 'm2') {
+            set(x, y, r < 0.35 ? '"' : r < 0.6 ? ',' : r < 0.75 ? "'" : ' ', r < 0.5 ? 'g1' : 'g0');
+          } else {
+            // Fels: Lichtseite mit etwas Struktur, Schattenseite fast leer
+            const ch = lit ? (r < 0.3 ? ':' : r < 0.6 ? '.' : ' ') : (r < 0.15 ? '.' : ' ');
+            set(x, y, ch, lit ? `${L.cls}-l` : `${L.cls}-s`);
+          }
+        }
+      }
+    });
+  }
+
   // ---------- Layout ----------
 
   function layout() {
@@ -206,6 +278,8 @@
       phase: Math.random() * Math.PI * 2,
       ch: Math.random() < 0.5 ? '*' : Math.random() < 0.5 ? 'o' : '.',
     }));
+
+    buildAlps();
 
     // Wiese: Blumen im unteren Teil, weiter unten = näher = größer
     depth = new Float32Array(cols * rows).fill(-Infinity);
@@ -252,7 +326,8 @@
       if (tw < -0.3) return;
       const ch = s.ch === '<3' ? s.ch : tw > 0.9 ? '+' : s.ch;
       const i = s.y * cols + s.x;
-      for (let k = 0; k < ch.length; k++) if (sky.has(i + k)) return;
+      // Sterne nur im Himmel, nicht vor den Bergen
+      for (let k = 0; k < ch.length; k++) if (sky.has(i + k) || bgCls[i + k]) return;
       const cls = tw < 0.3 ? `${s.cls} d` : s.cls;
       for (let k = 0; k < ch.length; k++) sky.set(i + k, [ch[k], cls]);
     });
@@ -270,6 +345,9 @@
           cls = `${mat[i]}-${l < 0.4 ? 0 : l < 0.7 ? 1 : 2}`;
         } else if (sky.has(i)) {
           [ch, cls] = sky.get(i);
+        } else if (bgCh[i] && bgCh[i] !== ' ') {
+          ch = bgCh[i];
+          cls = bgCls[i];
         }
         if (cls !== open) {
           if (open) html += '</span>';
