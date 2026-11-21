@@ -241,6 +241,56 @@
     });
   }
 
+  // ---------- Fliegende Katzen ----------
+
+  // zwei Flügelschläge, je 16 Zeichen breit; Leerzeichen sind durchsichtig
+  const CAT_FRAMES = [
+    [
+      ' \\    /\\_/\\    /',
+      '  \\__( o.o )__/ ',
+      '      > ^ <     ',
+    ],
+    [
+      '      /\\_/\\     ',
+      '  ___( o.o )___ ',
+      ' /    > ^ <    \\',
+    ],
+  ];
+  const CAT_W = 16;
+  const MIRROR = { '/': '\\', '\\': '/', '(': ')', ')': '(', '<': '>', '>': '<' };
+  const mirror = (s) => [...s].reverse().map((c) => MIRROR[c] || c).join('');
+  let cats = [];
+
+  function makeCats() {
+    cats = Array.from({ length: cols > 160 ? 5 : 3 }, (_, i) => ({
+      y: rows * (0.14 + 0.07 * i + 0.04 * Math.random()),
+      speed: 5 + Math.random() * 5,          // Spalten pro Sekunde
+      offset: Math.random() * (cols + 2 * CAT_W),
+      dir: i % 2 ? -1 : 1,
+      bob: 0.8 + Math.random(),
+      phase: Math.random() * Math.PI * 2,
+      flap: 170 + Math.random() * 120,       // ms pro Flügelschlag
+      cls: `cat${i % 4}`,
+    }));
+  }
+
+  function drawCats(sky, t) {
+    const sec = t / 1000;
+    cats.forEach((c) => {
+      let x = ((sec * c.speed + c.offset) % (cols + 2 * CAT_W)) - CAT_W;
+      if (c.dir < 0) x = cols - CAT_W - x;
+      const y = Math.round(c.y + Math.sin(sec * 1.6 + c.phase) * c.bob);
+      CAT_FRAMES[Math.floor(t / c.flap) % 2].forEach((line, dy) => {
+        const s = c.dir < 0 ? mirror(line) : line;
+        for (let k = 0; k < s.length; k++) {
+          const xx = Math.floor(x) + k, yy = y + dy;
+          if (s[k] === ' ' || xx < 0 || xx >= cols || yy < 0 || yy >= rows) continue;
+          sky.set(yy * cols + xx, [s[k], c.cls]);
+        }
+      });
+    });
+  }
+
   // ---------- Layout ----------
 
   function layout() {
@@ -280,6 +330,7 @@
     }));
 
     buildAlps();
+    makeCats();
 
     // Wiese: Blumen im unteren Teil, weiter unten = näher = größer
     depth = new Float32Array(cols * rows).fill(-Infinity);
@@ -321,6 +372,7 @@
       const x = Math.floor(f.x + Math.sin(sec * 0.8 + f.phase) * f.sway);
       if (x >= 0 && x < cols) sky.set(y * cols + x, [f.ch, 'snow']);
     });
+    drawCats(sky, t);
     stars.forEach((s) => {
       const tw = Math.sin(sec * s.speed + s.phase);
       if (tw < -0.3) return;
