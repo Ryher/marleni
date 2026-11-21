@@ -243,30 +243,30 @@
 
   // ---------- Fliegende Katzen ----------
 
-  // Katze von der Seite (Kopf rechts, Schwanz links), Flügel oben bzw. unten;
-  // je 22 Zeichen breit, Leerzeichen sind durchsichtig
+  // Schwebende Katze von der Seite (Kopf rechts, Schwanz links) mit baumelnden Pfötchen.
+  // Zwei Schwanzstellungen; je 26 Zeichen breit, Leerzeichen sind durchsichtig
   const CAT_FRAMES = [
     [
-      '        __/\\__        ',
-      '       /  /\\  \\ /\\_/\\ ',
-      ' ~,.__/___\\/___(  o  >',
-      '  (_ ___________ ,--\' ',
-      '     \\_\\     \\_\\      ',
+      '                   /\\_/\\  ',
+      '  (\\     _.-------( o.o ) ',
+      '   \\\\   (          > ^ <  ',
+      '    `---\\_____________/   ',
+      '          U U       U U   ',
     ],
     [
-      '                      ',
-      '                /\\_/\\ ',
-      ' ~,.___________(  o  >',
-      '  (_ ___\\  /____ ,--\' ',
-      '     \\_\\ \\/  \\_\\      ',
+      '                   /\\_/\\  ',
+      '         _.-------( o.o ) ',
+      '  ~~\\   (          > ^ <  ',
+      '    `---\\_____________/   ',
+      '          U U       U U   ',
     ],
   ];
-  const CAT_W = 22;
+  const CAT_W = 26;
   const MIRROR = { '/': '\\', '\\': '/', '(': ')', ')': '(', '<': '>', '>': '<' };
   const mirror = (s) => [...s].reverse().map((c) => MIRROR[c] || c).join('');
   let cats = [];
 
-  // Die Katzen sind eigene <pre>-Elemente mit größerer Schrift als das feine Wiesen-Raster,
+  // Die Katzen schweben ohne Flügel. Sie sind eigene <pre>-Elemente mit größerer Schrift als das feine Wiesen-Raster,
   // damit man sie gut erkennt. Bewegt werden sie per transform (in Pixeln).
   function makeCats(fontSize, charW) {
     cats.forEach((c) => c.el.remove());
@@ -288,8 +288,9 @@
         dir: i % 2 ? -1 : 1,
         bob: catFont * (0.8 + Math.random()),
         phase: Math.random() * Math.PI * 2,
-        flap: 170 + Math.random() * 120,               // ms pro Flügelschlag
-        frame: -1,
+        wag: 500 + Math.random() * 300,                // ms pro Schwanzwedeln
+        blink: Math.random() * 3000,                   // Versatz, damit nicht alle gleichzeitig blinzeln
+        frame: '',
       };
     });
   }
@@ -300,13 +301,20 @@
     cats.forEach((c) => {
       let x = ((sec * c.speed + c.offset) % (w + 2 * c.catW)) - c.catW;
       if (c.dir < 0) x = w - c.catW - x;
-      const y = c.y + Math.sin(sec * 1.6 + c.phase) * c.bob;
-      const f = Math.floor(t / c.flap) % 2;
-      if (f !== c.frame) {
-        c.frame = f;
-        c.el.textContent = CAT_FRAMES[f].map((line) => (c.dir < 0 ? mirror(line) : line)).join('\n');
+      const y = c.y + Math.sin(sec * 1.2 + c.phase) * c.bob;
+      // sanftes Schaukeln beim Schweben
+      const tilt = Math.sin(sec * 0.9 + c.phase) * 4;
+      const f = Math.floor(t / c.wag) % 2;
+      const blinking = (t + c.blink) % 3200 < 160;
+      const key = `${f}${blinking}`;
+      if (key !== c.frame) {
+        c.frame = key;
+        c.el.textContent = CAT_FRAMES[f]
+          .map((line) => (blinking ? line.replace('o.o', '-.-') : line))
+          .map((line) => (c.dir < 0 ? mirror(line) : line))
+          .join('\n');
       }
-      c.el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
+      c.el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) rotate(${tilt.toFixed(2)}deg)`;
     });
   }
 
