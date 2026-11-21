@@ -55,11 +55,24 @@
     #art .g0 { color: #2d5a33; }
     #art .g1 { color: #43804a; }
 
-    /* fliegende Katzen: weiß, orange, grau, lila */
-    #art .cat0 { color: #f4eeff; text-shadow: 0 0 4px rgba(255, 255, 255, 0.6); }
-    #art .cat1 { color: #ffb36b; text-shadow: 0 0 4px rgba(255, 179, 107, 0.6); }
-    #art .cat2 { color: #c9c4d8; text-shadow: 0 0 4px rgba(201, 196, 216, 0.5); }
-    #art .cat3 { color: #d1a8ff; text-shadow: 0 0 4px rgba(209, 168, 255, 0.6); }
+    /* fliegende Katzen: eigene Ebene über den Bergen, unter dem Herz */
+    .cat {
+      position: fixed;
+      top: 0;
+      left: 0;
+      margin: 0;
+      font-family: ui-monospace, Menlo, Consolas, "Courier New", monospace;
+      font-weight: 700;
+      line-height: 1;
+      white-space: pre;
+      pointer-events: none;
+      user-select: none;
+      will-change: transform;
+    }
+    .cat0 { color: #f4eeff; text-shadow: 0 0 4px rgba(255, 255, 255, 0.6); }
+    .cat1 { color: #ffb36b; text-shadow: 0 0 4px rgba(255, 179, 107, 0.6); }
+    .cat2 { color: #c9c4d8; text-shadow: 0 0 4px rgba(201, 196, 216, 0.5); }
+    .cat3 { color: #d1a8ff; text-shadow: 0 0 4px rgba(209, 168, 255, 0.6); }
   </style>
 </head>
 <body>
