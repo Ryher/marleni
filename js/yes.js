@@ -2,7 +2,7 @@
  * Erfolgsseite: ASCII-Sternenhimmel mit Schnee, dahinter ein Alpenpanorama aus drei
  * Bergketten mit Schneegipfeln, davor eine Wiese aus vielen kleinen, verschiedenen
  * 3D-ASCII-Blumen (gleiche Schattierung wie die große Ochsenzunge, aber ohne Drehung)
- * und ein paar Salven Konfetti in Lila, Violett und Weiß.
+ * und schwebende ASCII-Katzen.
  *
  * Die Blumen erscheinen nacheinander und bleiben dann stehen. Jede Blume wird einmal in
  * einen statischen Z-Buffer gezeichnet; Sterne und Schnee laufen in den freien Zellen weiter.
@@ -474,35 +474,4 @@
     }
   }
   begin();
-
-  // ---------- Konfetti ----------
-
-  // Die Bibliothek lädt asynchron (yes.html) und ruft das hier auf, sobald sie da ist,
-  // damit die Szene nie auf sie warten muss.
-  let confettiStarted = false;
-  function startConfetti() {
-    if (confettiStarted || !window.confetti) return;
-    confettiStarted = true;
-    const colors = ['#c39bf5', '#8f5fd6', '#5b3a99', '#a57ad8', '#ffffff'];
-    const burst = (opts) => window.confetti({ colors, disableForReducedMotion: false, ...opts });
-
-    if (reduced) {
-      // nur eine kleine, kurze Salve
-      burst({ particleCount: 40, spread: 70, startVelocity: 25, ticks: 120, origin: { y: 0.6 } });
-      return;
-    }
-
-    burst({ particleCount: 140, spread: 90, startVelocity: 45, origin: { y: 0.65 } });
-    setTimeout(() => {
-      burst({ particleCount: 70, angle: 60, spread: 60, origin: { x: 0, y: 0.75 } });
-      burst({ particleCount: 70, angle: 120, spread: 60, origin: { x: 1, y: 0.75 } });
-    }, 700);
-    setTimeout(() => burst({ particleCount: 120, spread: 120, startVelocity: 35, origin: { y: 0.55 } }), 1500);
-    setTimeout(() => {
-      burst({ particleCount: 60, angle: 60, spread: 70, origin: { x: 0, y: 0.6 } });
-      burst({ particleCount: 60, angle: 120, spread: 70, origin: { x: 1, y: 0.6 } });
-    }, 2400);
-  }
-  window.startConfetti = startConfetti;
-  startConfetti();   // falls die Bibliothek schon vorher geladen war
 })();

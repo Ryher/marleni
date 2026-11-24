@@ -32,7 +32,7 @@
         document.getElementById('question').classList.add('visible');
         Question.show();
         // Yes-Seite schon mal im Hintergrund laden, damit sie nach dem Tippen sofort da ist
-        ['yes.html', 'js/yes.js', 'js/vendor/confetti.min.js'].forEach((url) => {
+        ['yes.html', 'js/yes.js'].forEach((url) => {
           fetch(url).catch(() => {});
         });
       },
