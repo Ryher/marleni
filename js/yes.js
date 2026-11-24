@@ -442,45 +442,67 @@
   }
 
   let start = performance.now();
-  layout();
-  window.addEventListener('resize', () => {
+
+  function begin() {
+    // Direkt nach dem Seitenwechsel melden manche Handys kurz noch keine Größe: dann gleich nochmal versuchen
+    if (!window.innerWidth || !window.innerHeight) {
+      requestAnimationFrame(begin);
+      return;
+    }
     layout();
-    start = performance.now() - flowers.length * APPEAR_MS;   // nach Resize alle sofort zeigen
-    draw(performance.now() - start);
-  });
-  draw(0);
-  if (!reduced) {
-    let last = -Infinity;
-    const frame = (now) => {
-      if (now - last >= 1000 / 20) {
-        last = now;
-        draw(now - start);
-      }
+    if (!cols || !rows || !isFinite(cols) || !isFinite(rows)) {
+      requestAnimationFrame(begin);
+      return;
+    }
+    start = performance.now();
+    draw(0);
+    window.addEventListener('resize', () => {
+      layout();
+      start = performance.now() - flowers.length * APPEAR_MS;   // nach Resize alle sofort zeigen
+      draw(performance.now() - start);
+    });
+    if (!reduced) {
+      let last = -Infinity;
+      const frame = (now) => {
+        if (now - last >= 1000 / 20) {
+          last = now;
+          draw(now - start);
+        }
+        requestAnimationFrame(frame);
+      };
       requestAnimationFrame(frame);
-    };
-    requestAnimationFrame(frame);
+    }
   }
+  begin();
 
   // ---------- Konfetti ----------
 
-  if (!window.confetti) return;   // CDN nicht erreichbar: dann eben ohne
-  const colors = ['#c39bf5', '#8f5fd6', '#5b3a99', '#a57ad8', '#ffffff'];
-  const burst = (opts) => window.confetti({ colors, disableForReducedMotion: false, ...opts });
+  // Die Bibliothek lädt asynchron (yes.html) und ruft das hier auf, sobald sie da ist,
+  // damit die Szene nie auf sie warten muss.
+  let confettiStarted = false;
+  function startConfetti() {
+    if (confettiStarted || !window.confetti) return;
+    confettiStarted = true;
+    const colors = ['#c39bf5', '#8f5fd6', '#5b3a99', '#a57ad8', '#ffffff'];
+    const burst = (opts) => window.confetti({ colors, disableForReducedMotion: false, ...opts });
 
-  if (reduced) {
-    // nur eine kleine, kurze Salve
-    burst({ particleCount: 40, spread: 70, startVelocity: 25, ticks: 120, origin: { y: 0.6 } });
-    return;
+    if (reduced) {
+      // nur eine kleine, kurze Salve
+      burst({ particleCount: 40, spread: 70, startVelocity: 25, ticks: 120, origin: { y: 0.6 } });
+      return;
+    }
+
+    burst({ particleCount: 140, spread: 90, startVelocity: 45, origin: { y: 0.65 } });
+    setTimeout(() => {
+      burst({ particleCount: 70, angle: 60, spread: 60, origin: { x: 0, y: 0.75 } });
+      burst({ particleCount: 70, angle: 120, spread: 60, origin: { x: 1, y: 0.75 } });
+    }, 700);
+    setTimeout(() => burst({ particleCount: 120, spread: 120, startVelocity: 35, origin: { y: 0.55 } }), 1500);
+    setTimeout(() => {
+      burst({ particleCount: 60, angle: 60, spread: 70, origin: { x: 0, y: 0.6 } });
+      burst({ particleCount: 60, angle: 120, spread: 70, origin: { x: 1, y: 0.6 } });
+    }, 2400);
   }
-
-  burst({ particleCount: 140, spread: 90, startVelocity: 45, origin: { y: 0.65 } });
-  setTimeout(() => {
-    burst({ particleCount: 70, angle: 60, spread: 60, origin: { x: 0, y: 0.75 } });
-    burst({ particleCount: 70, angle: 120, spread: 60, origin: { x: 1, y: 0.75 } });
-  }, 700);
-  setTimeout(() => burst({ particleCount: 120, spread: 120, startVelocity: 35, origin: { y: 0.55 } }), 1500);
-  setTimeout(() => {
-    burst({ particleCount: 60, angle: 60, spread: 70, origin: { x: 0, y: 0.6 } });
-    burst({ particleCount: 60, angle: 120, spread: 70, origin: { x: 1, y: 0.6 } });
-  }, 2400);
+  window.startConfetti = startConfetti;
+  startConfetti();   // falls die Bibliothek schon vorher geladen war
 })();
